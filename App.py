@@ -1,5 +1,8 @@
 import streamlit as st
+from tkinter import *
+from tkinter import ttk
 import turtle
+
 from PIL import Image
 
 # Function to draw a square using Turtle
