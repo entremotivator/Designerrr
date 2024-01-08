@@ -1,76 +1,38 @@
 import streamlit as st
-import turtle
-import matplotlib.backends.backend_agg as agg
 import matplotlib.pyplot as plt
+from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from PIL import Image
-import os
-
-# Function to draw a square using Turtle
-def draw_square(turtle_instance):
-    for _ in range(4):
-        turtle_instance.forward(100)
-        turtle_instance.right(90)
 
 # Streamlit app layout
-st.title("Turtle Image Design App")
-st.sidebar.title("Options")
+st.title("Drawing Layers with Matplotlib")
 
 # Sidebar for user input
-num_images = st.sidebar.number_input("Number of Images", min_value=1, max_value=5, value=1, step=1)
-
-# Initialize Turtle instances for each image
-turtles = [turtle.Turtle() for _ in range(num_images)]
+num_layers = st.sidebar.number_input("Number of Layers", min_value=1, max_value=5, value=1, step=1)
 
 # Draw based on user input
-for idx, turtle_instance in enumerate(turtles):
-    st.sidebar.markdown(f"### Image {idx + 1}")
+fig, ax = plt.subplots()
 
-    shape_choice = st.sidebar.selectbox(f"Select Shape for Image {idx + 1}", ["turtle", "circle", "square"])
-    user_image = st.sidebar.file_uploader(f"Upload Image {idx + 1}", type=["jpg", "jpeg", "png"])
+for layer in range(num_layers):
+    st.sidebar.markdown(f"### Layer {layer + 1}")
+    shape_choice = st.sidebar.selectbox(f"Select Shape for Layer {layer + 1}", ["circle", "square"])
+    color_choice = st.sidebar.color_picker(f"Choose Color for Layer {layer + 1}")
 
-    if user_image is not None:
-        st.sidebar.image(user_image, caption=f"Uploaded Image {idx + 1}", use_column_width=True)
+    if shape_choice == "circle":
+        ax.add_patch(plt.Circle((0.5, 0.5), 0.4, color=color_choice, alpha=0.5))
+    elif shape_choice == "square":
+        ax.add_patch(plt.Rectangle((0.1, 0.1), 0.8, 0.8, color=color_choice, alpha=0.5))
 
-        # Set Turtle shape
-        turtle_instance.shape(shape_choice)
-
-        # Draw layer on the image
-        if st.sidebar.button(f"Add Layer for Image {idx + 1}"):
-            draw_square(turtle_instance)
+# Display the plot
+ax.set_aspect('equal', adjustable='datalim')
+ax.axis('off')
+st.pyplot(fig)
 
 # Save combined image
 if st.button("Save Combined Image"):
-    combined_image = None
-    fig, ax = plt.subplots()
-    
-    for idx, turtle_instance in enumerate(turtles):
-        # Draw turtle graphics using Matplotlib Agg backend
-        agg_canvas = agg.FigureCanvasAgg(fig)
-        turtle_instance_canvas = turtle_instance.getcanvas()
-        turtle_instance_canvas.postscript(file=f"temp_image_{idx}.eps", colormode='color')
-        Image.open(f"temp_image_{idx}.eps").save(f"temp_image_{idx}.png", "png")
+    plt.savefig("combined_image.png")
+    st.success("Image saved successfully!")
 
-        # Clear the canvas
-        turtle_instance.reset()
-
-        # Combine images using Matplotlib
-        img_path = f"temp_image_{idx}.png"
-        if os.path.exists(img_path):
-            img = plt.imread(img_path)
-            if combined_image is None:
-                combined_image = img
-            else:
-                combined_image = agg_canvas.copy_from_bbox(ax.bbox)
-                ax.clear()
-                ax.imshow(combined_image)
-                ax.imshow(img, alpha=0.5)
-                agg_canvas.draw()
-
-    if combined_image is not None:
-        agg_canvas.print_png("combined_image.png")
-        st.success("Images saved and combined successfully!")
-
-# Close Turtle graphics on Streamlit exit
+# Close Matplotlib graphics on Streamlit exit
 if st.button("Exit"):
     st.balloons()
     st.stop()
