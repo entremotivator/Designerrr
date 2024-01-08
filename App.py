@@ -1,6 +1,5 @@
 import streamlit as st
 import matplotlib.pyplot as plt
-from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from PIL import Image
 import io
 
@@ -44,7 +43,7 @@ if st.button("Save Combined Image"):
     st.success("Image saved successfully!")
 
 # Display the plot in Streamlit
-st.image(fig, use_column_width=True)
+st.image("combined_image.png", use_column_width=True)
 
 # Close Matplotlib graphics on Streamlit exit
 if st.button("Exit"):
