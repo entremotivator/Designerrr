@@ -2,6 +2,11 @@ import streamlit as st
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from PIL import Image
+import io
+
+# Function to draw a square
+def draw_square(ax, color_choice):
+    ax.add_patch(plt.Rectangle((0.1, 0.1), 0.8, 0.8, color=color_choice, alpha=0.5))
 
 # Streamlit app layout
 st.title("Drawing Layers with Matplotlib")
@@ -20,19 +25,28 @@ for layer in range(num_layers):
     if shape_choice == "circle":
         ax.add_patch(plt.Circle((0.5, 0.5), 0.4, color=color_choice, alpha=0.5))
     elif shape_choice == "square":
-        ax.add_patch(plt.Rectangle((0.1, 0.1), 0.8, 0.8, color=color_choice, alpha=0.5))
+        draw_square(ax, color_choice)
 
 # Display the plot
 ax.set_aspect('equal', adjustable='datalim')
 ax.axis('off')
-st.pyplot(fig)
 
 # Save combined image
 if st.button("Save Combined Image"):
-    plt.savefig("combined_image.png")
+    # Save the figure to a BytesIO buffer
+    buf = io.BytesIO()
+    plt.savefig(buf, format='png')
+    buf.seek(0)
+
+    # Open the image using PIL and save it
+    img = Image.open(buf)
+    img.save("combined_image.png")
     st.success("Image saved successfully!")
+
+# Display the plot in Streamlit
+st.image(fig, use_column_width=True)
 
 # Close Matplotlib graphics on Streamlit exit
 if st.button("Exit"):
+    plt.close()
     st.balloons()
-    st.stop()
