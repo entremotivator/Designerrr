@@ -1,5 +1,7 @@
 import streamlit as st
 import turtle
+import matplotlib.backends.backend_agg as agg
+import matplotlib.pyplot as plt
 from PIL import Image
 import os
 
@@ -38,10 +40,12 @@ for idx, turtle_instance in enumerate(turtles):
 
 # Save combined image
 if st.button("Save Combined Image"):
-    combined_canvas = turtle.Screen()
+    combined_image = None
+    fig, ax = plt.subplots()
     
     for idx, turtle_instance in enumerate(turtles):
-        # Get turtle canvas as an image
+        # Draw turtle graphics using Matplotlib Agg backend
+        agg_canvas = agg.FigureCanvasAgg(fig)
         turtle_instance_canvas = turtle_instance.getcanvas()
         turtle_instance_canvas.postscript(file=f"temp_image_{idx}.eps", colormode='color')
         Image.open(f"temp_image_{idx}.eps").save(f"temp_image_{idx}.png", "png")
@@ -49,21 +53,21 @@ if st.button("Save Combined Image"):
         # Clear the canvas
         turtle_instance.reset()
 
-    combined_canvas.bye()
-
-    # Combine images using PIL
-    combined_image = None
-    for idx in range(num_images):
+        # Combine images using Matplotlib
         img_path = f"temp_image_{idx}.png"
         if os.path.exists(img_path):
-            img = Image.open(img_path)
+            img = plt.imread(img_path)
             if combined_image is None:
                 combined_image = img
             else:
-                combined_image.paste(img, (0, 0), img)
+                combined_image = agg_canvas.copy_from_bbox(ax.bbox)
+                ax.clear()
+                ax.imshow(combined_image)
+                ax.imshow(img, alpha=0.5)
+                agg_canvas.draw()
 
     if combined_image is not None:
-        combined_image.save("combined_image.png", "png")
+        agg_canvas.print_png("combined_image.png")
         st.success("Images saved and combined successfully!")
 
 # Close Turtle graphics on Streamlit exit
